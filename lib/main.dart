@@ -2,20 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/api_manager.dart';
 import 'models/api_key.dart';
 import 'screens/home/home_screen.dart';
-import 'screens/auth/login_screen.dart';
 import 'config/theme_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp();
 
   await Hive.initFlutter();
   Hive.registerAdapter(APIKeyAdapter());
@@ -43,10 +39,9 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'MobApp',
         theme: ThemeConfig.lightTheme,
-        darkTheme: ThemeConfig.darkTheme,
         home: Consumer<AuthService>(
           builder: (context, auth, _) {
-            return auth.user != null ? const HomeScreen() : const LoginScreen();
+            return auth.user != null ? HomeScreen() : LoginScreen();
           },
         ),
       ),
