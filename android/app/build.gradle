@@ -6,15 +6,18 @@ if (localPropertiesFile.exists()) {
     }
 }
 
-plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
-    id 'com.google.gms.google-services'  // Google Services plugin
+def flutterRoot = localProperties.getProperty('flutter.sdk')
+if (flutterRoot == null) {
+    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
 }
 
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+apply plugin: 'com.google.gms.google-services'
+
 android {
-    namespace = "com.example.mobapp"
+    namespace "com.example.mobapp"
     compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
@@ -39,13 +42,8 @@ android {
 }
 
 dependencies {
-    // Firebase BoM
     implementation platform('com.google.firebase:firebase-bom:32.7.0')
-    
-    // Firebase Analytics
     implementation 'com.google.firebase:firebase-analytics'
-    
-    // Firebase Auth
     implementation 'com.google.firebase:firebase-auth'
 }
 
