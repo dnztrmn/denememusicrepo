@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "135617997243",
+    "project_id": "speezymusiccc",
+    "storage_bucket": "speezymusiccc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:135617997243:android:ed11af4759febef74d7c9e",
+        "android_client_info": {
+          "package_name": "com.example.mobapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPYg1w8dglEKkvuT1aBsc2aKnbowpvMMU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
