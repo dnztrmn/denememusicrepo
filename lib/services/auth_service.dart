@@ -1,43 +1,40 @@
-import 'package:google_sign_in/google_sign_in.dart';
-import '../config/api_config.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class AuthService {
-  static final AuthService _instance = AuthService._internal();
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
-  GoogleSignInAccount? _currentUser;
+class AuthService extends ChangeNotifier {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  User? _user;
 
-  factory AuthService() {
-    return _instance;
+  User? get user => _user;
+
+  Future<void> initialize() async {
+    _auth.authStateChanges().listen((User? user) {
+      _user = user;
+      notifyListeners();
+    });
   }
 
-  AuthService._internal();
-
-  GoogleSignInAccount? get currentUser => _currentUser;
-
-  bool get isAdmin =>
-      _currentUser != null &&
-      APIConfig.ADMIN_EMAILS.contains(_currentUser!.email);
-
-  Future<bool> signIn() async {
+  Future<UserCredential> signIn(String email, String password) async {
     try {
-      final user = await _googleSignIn.signIn();
-      if (user != null) {
-        _currentUser = user;
-        return true;
-      }
-      return false;
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return credential;
     } catch (e) {
-      print('Error signing in: $e');
-      return false;
+      print('Sign in error: $e');
+      rethrow;
     }
   }
 
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
-      _currentUser = null;
+      await _auth.signOut();
     } catch (e) {
-      print('Error signing out: $e');
+      print('Sign out error: $e');
+      rethrow;
     }
   }
+
+  bool get isAuthenticated => _user != null;
 }

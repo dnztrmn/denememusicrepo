@@ -1,37 +1,35 @@
 import 'package:flutter/material.dart';
 
-class AppTheme {
-  static ThemeData darkTheme = ThemeData(
-    brightness: Brightness.dark,
-    primaryColor: Colors.red,
-    scaffoldBackgroundColor: Color(0xFF121212),
-    appBarTheme: AppBarTheme(
-      backgroundColor: Color(0xFF212121),
-      elevation: 0,
-    ),
-    cardTheme: CardTheme(
-      color: Color(0xFF1E1E1E),
-      elevation: 2,
-    ),
-    bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFF212121),
-      selectedItemColor: Colors.red,
-      unselectedItemColor: Colors.grey,
-    ),
-    textTheme: TextTheme(
-      headline6: TextStyle(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
+class ThemeConfig {
+  static ThemeData get lightTheme {
+    return ThemeData(
+      primarySwatch: Colors.blue,
+      scaffoldBackgroundColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      bodyText1: TextStyle(
-        color: Colors.white,
-        fontSize: 16,
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(
+          // headline6 yerine titleLarge kullanıldı
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          color: Colors.black87,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          color: Colors.black54,
+        ),
       ),
-      bodyText2: TextStyle(
-        color: Colors.grey[300],
-        fontSize: 14,
+      buttonTheme: const ButtonThemeData(
+        buttonColor: Colors.blue,
+        textTheme: ButtonTextTheme.primary,
       ),
-    ),
-  );
+    );
+  }
 }
