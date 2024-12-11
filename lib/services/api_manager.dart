@@ -28,7 +28,46 @@ class APIManager {
     await _keysBox.put(key.id, key);
   }
 
-  Future<void> clearAll() async {
-    await _keysBox.clear();
+  Future<void> updateKeyStatus(String key, bool status) async {
+    final apiKey = getKey(key);
+    if (apiKey != null) {
+      apiKey.isActive = status;
+      await updateKey(apiKey);
+    }
+  }
+
+  Future<void> removeAPIKey(String key) async {
+    await removeKey(key);
+  }
+
+  Future<void> addAPIKey(String key, String name) async {
+    final newKey = APIKey(id: key, name: name);
+    await addKey(newKey);
+  }
+
+  APIKey? getCurrentKey() {
+    return allKeys.firstWhere((key) => key.isActive,
+        orElse: () => allKeys.first);
+  }
+
+  Future<void> updateQuotaUsage(String key, int usage) async {
+    final apiKey = getKey(key);
+    if (apiKey != null) {
+      apiKey.quotaUsed += usage;
+      await updateKey(apiKey);
+    }
+  }
+
+  void rotateKey() {
+    final currentKey = getCurrentKey();
+    if (currentKey != null) {
+      final keys = allKeys;
+      final currentIndex = keys.indexOf(currentKey);
+      final nextIndex = (currentIndex + 1) % keys.length;
+      keys[currentIndex].isActive = false;
+      keys[nextIndex].isActive = true;
+      updateKey(keys[currentIndex]);
+      updateKey(keys[nextIndex]);
+    }
   }
 }

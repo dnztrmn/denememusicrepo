@@ -1,73 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'config/theme_config.dart';
-import 'navigation/app_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'services/api_manager.dart';
 import 'models/api_key.dart';
-import 'screens/main_screen.dart';
+import 'screens/home/home_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'config/theme_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Hive başlatma ve yapılandırma
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   await Hive.initFlutter();
   Hive.registerAdapter(APIKeyAdapter());
-  await Hive.openBox('user_preferences');
 
-  // Servisleri başlat
-  await APIManager().initialize();
+  final apiManager = APIManager();
+  await apiManager.initialize();
+
   await AuthService().initialize();
 
-  runApp(MyApp());
+  runApp(MyApp(apiManager: apiManager));
 }
 
 class MyApp extends StatelessWidget {
+  final APIManager apiManager;
+
+  const MyApp({Key? key, required this.apiManager}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
-        Provider<APIManager>(create: (_) => APIManager()),
+        Provider.value(value: apiManager),
       ],
       child: MaterialApp(
-        title: 'YouTube Music Clone',
-        theme: AppTheme.darkTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.dark,
-        debugShowCheckedModeBanner: false,
-        initialRoute: AppRouter.home,
-        onGenerateRoute: AppRouter.generateRoute,
-        home: MainScreen(), // Ana ekran widget'ı
-        builder: (context, child) {
-          // Hata yakalama ve genel uygulama yapılandırması
-          return ScrollConfiguration(
-            behavior: ScrollBehavior().copyWith(
-              physics: BouncingScrollPhysics(),
-            ),
-            child: child!,
-          );
-        },
-        localizationsDelegates: [
-          DefaultMaterialLocalizations.delegate,
-          DefaultWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: [
-          const Locale('en', 'US'),
-          const Locale('tr', 'TR'),
-        ],
+        title: 'MobApp',
+        theme: ThemeConfig.lightTheme,
+        darkTheme: ThemeConfig.darkTheme,
+        home: Consumer<AuthService>(
+          builder: (context, auth, _) {
+            return auth.user != null ? const HomeScreen() : const LoginScreen();
+          },
+        ),
       ),
     );
   }
-}
-
-// Uygulama genelinde kullanılacak global key
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-// Hata yakalama
-void handleError(Object error, StackTrace stack) {
-  debugPrint('Error: $error');
-  debugPrint('Stack trace: $stack');
-  // Hata raporlama servisi buraya eklenebilir
 }
