@@ -19,7 +19,7 @@ dependencies:
   flutter_inappwebview: ^5.8.0
   audio_service: ^0.18.12
   just_audio: ^0.9.36
-  flutter_local_notifications: ^13.0.0 # Bildirim 
+  # flutter_local_notifications: ^13.0.0 # Bildirim 
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.1.1

@@ -22,12 +22,12 @@ android {
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17    // Güncellendi
+        targetCompatibility JavaVersion.VERSION_17    // Güncellendi
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'    // Güncellendi
     }
 
     sourceSets {
@@ -36,7 +36,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.mobapp"
-        minSdkVersion 21  // WebView için minimum SDK gerekliliği
+        minSdkVersion 21
         targetSdkVersion flutter.targetSdkVersion
         versionCode 1
         versionName "1.0"
@@ -45,9 +45,6 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
-            // Proguard eklemek isterseniz:
-            // minifyEnabled true
-            // proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
