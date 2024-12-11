@@ -6,6 +6,7 @@ import 'services/auth_service.dart';
 import 'services/api_manager.dart';
 import 'models/api_key.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/auth/login_screen.dart';
 import 'config/theme_config.dart';
 
 void main() async {
@@ -41,7 +42,9 @@ class MyApp extends StatelessWidget {
         theme: ThemeConfig.lightTheme,
         home: Consumer<AuthService>(
           builder: (context, auth, _) {
-            return auth.user != null ? HomeScreen() : LoginScreen();
+            return auth.user != null
+                ? const HomeScreen()
+                : const LoginScreen(); // const eklendi
           },
         ),
       ),

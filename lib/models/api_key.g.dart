@@ -1,10 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'api_key.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class APIKeyAdapter extends TypeAdapter<APIKey> {
   @override
@@ -17,31 +11,25 @@ class APIKeyAdapter extends TypeAdapter<APIKey> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return APIKey(
-      key: fields[0] as String,
+      id: fields[0] as String,
       name: fields[1] as String,
-      quotaUsed: fields[2] as int,
-      lastUsed: fields[3] as DateTime?,
-      isActive: fields[4] as bool,
-      dailyQuotaLimit: fields[5] as int,
+      isActive: fields[2] as bool,
+      quotaUsed: fields[3] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, APIKey obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.key)
+      ..write(obj.id)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.quotaUsed)
-      ..writeByte(3)
-      ..write(obj.lastUsed)
-      ..writeByte(4)
       ..write(obj.isActive)
-      ..writeByte(5)
-      ..write(obj.dailyQuotaLimit);
+      ..writeByte(3)
+      ..write(obj.quotaUsed);
   }
 
   @override
