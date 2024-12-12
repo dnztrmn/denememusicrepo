@@ -1,204 +1,157 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import '../../models/video.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
+import 'package:soundy/services/youtube_service.dart';
 
 class PlayerScreen extends StatefulWidget {
-  final Video video;
+  final String videoId;
+  final String title;
+  final String author;
+  final String thumbnailUrl;
 
-  const PlayerScreen({Key? key, required this.video}) : super(key: key);
+  const PlayerScreen({
+    Key? key,
+    required this.videoId,
+    required this.title,
+    required this.author,
+    required this.thumbnailUrl,
+  }) : super(key: key);
 
   @override
-  _PlayerScreenState createState() => _PlayerScreenState();
+  State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  late YoutubePlayerController _controller;
-  bool _isPlaying = true;
-  bool _isMinimized = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _controller = YoutubePlayerController(
-      initialVideoId: widget.video.id,
-      flags: YoutubePlayerFlags(
-        autoPlay: true,
-        mute: false,
-        enableCaption: true,
-        forceHD: true,
-      ),
-    );
+    _initializePlayer();
+  }
+
+  Future<void> _initializePlayer() async {
+    try {
+      final youtubeService =
+          Provider.of<YoutubeService>(context, listen: false);
+      final audioUrl = await youtubeService.getAudioUrl(widget.videoId);
+
+      await _audioPlayer.setUrl(audioUrl);
+      _audioPlayer.durationStream.listen((d) {
+        if (d != null && mounted) {
+          setState(() => _duration = d);
+        }
+      });
+
+      _audioPlayer.positionStream.listen((p) {
+        if (mounted) {
+          setState(() => _position = p);
+        }
+      });
+
+      _audioPlayer.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() => _isPlaying = state.playing);
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _isMinimized
-                ? _buildMinimizedPlayer()
-                : _buildFullPlayer(),
-            if (!_isMinimized) _buildVideoInfo(),
-          ],
-        ),
+      appBar: AppBar(
+        title: const Text('Now Playing'),
       ),
-      bottomNavigationBar: _buildControlBar(),
-    );
-  }
-
-  Widget _buildFullPlayer() {
-    return YoutubePlayer(
-      controller: _controller,
-      showVideoProgressIndicator: true,
-      progressIndicatorColor: Colors.red,
-      progressColors: ProgressBarColors(
-        playedColor: Colors.red,
-        handleColor: Colors.redAccent,
-      ),
-      onReady: () {
-        print("Player is ready.");
-      },
-    );
-  }
-
-  Widget _buildMinimizedPlayer() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _isMinimized = false;
-        });
-      },
-      child: Container(
-        height: 60,
-        color: Colors.black87,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 100,
-              child: YoutubePlayer(
-                controller: _controller,
-                showVideoProgressIndicator: false,
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  widget.video.title,
-                  style: TextStyle(color: Colors.white),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            IconButton(
-              icon: Icon(
-                _isPlaying ? Icons.pause : Icons.play_arrow,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isPlaying = !_isPlaying;
-                  _isPlaying ? _controller.play() : _controller.pause();
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.close, color: Colors.white),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVideoInfo() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Image.network(
+            widget.thumbnailUrl,
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+          const SizedBox(height: 20),
           Text(
-            widget.video.title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+            widget.title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            widget.author,
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          const SizedBox(height: 20),
+          Slider(
+            value: _position.inSeconds.toDouble(),
+            max: _duration.inSeconds.toDouble(),
+            onChanged: (value) {
+              final position = Duration(seconds: value.toInt());
+              _audioPlayer.seek(position);
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(_formatDuration(_position)),
+                Text(_formatDuration(_duration)),
+              ],
             ),
           ),
-          SizedBox(height: 8),
-          Text(
-            widget.video.channelTitle,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            widget.video.description,
-            style: TextStyle(fontSize: 14),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.replay_10),
+                onPressed: () {
+                  _audioPlayer.seek(_position - const Duration(seconds: 10));
+                },
+              ),
+              IconButton(
+                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                onPressed: () {
+                  if (_isPlaying) {
+                    _audioPlayer.pause();
+                  } else {
+                    _audioPlayer.play();
+                  }
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.forward_10),
+                onPressed: () {
+                  _audioPlayer.seek(_position + const Duration(seconds: 10));
+                },
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildControlBar() {
-    return Container(
-      height: 60,
-      color: Colors.grey[900],
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          IconButton(
-            icon: Icon(Icons.skip_previous, color: Colors.white),
-            onPressed: () {
-              // Previous video logic
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              _isPlaying ? Icons.pause : Icons.play_arrow,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              setState(() {
-                _isPlaying = !_isPlaying;
-                _isPlaying ? _controller.play() : _controller.pause();
-              });
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.skip_next, color: Colors.white),
-            onPressed: () {
-              // Next video logic
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              _isMinimized ? Icons.fullscreen : Icons.fullscreen_exit,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              setState(() {
-                _isMinimized = !_isMinimized;
-              });
-            },
-          ),
-        ],
-      ),
-    );
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 }

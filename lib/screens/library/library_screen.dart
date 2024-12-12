@@ -1,96 +1,48 @@
 import 'package:flutter/material.dart';
-import '../../models/video.dart';
-import '../../services/storage_service.dart';
-import '../../widgets/video_download_tile.dart';
+import 'package:provider/provider.dart';
+import 'package:soundy/services/youtube_service.dart';
+import 'package:soundy/widgets/video_card.dart';
 
 class LibraryScreen extends StatefulWidget {
+  const LibraryScreen({Key? key}) : super(key: key);
+
   @override
-  _LibraryScreenState createState() => _LibraryScreenState();
+  State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final StorageService _storageService = StorageService();
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
+class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Library'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: 'Downloads'),
-            Tab(text: 'Playlists'),
-            Tab(text: 'History'),
-          ],
-        ),
+        title: const Text('Library'),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildDownloadsTab(),
-          _buildPlaylistsTab(),
-          _buildHistoryTab(),
-        ],
-      ),
-    );
-  }
+      body: Consumer<YoutubeService>(
+        builder: (context, youtubeService, child) {
+          final videos = youtubeService.savedVideos;
 
-  Widget _buildDownloadsTab() {
-    return FutureBuilder<List<Video>>(
-      future: _storageService.getOfflineVideos(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Text('No downloaded videos'),
-          );
-        }
-
-        return ListView.builder(
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            return VideoDownloadTile(
-              video: snapshot.data![index],
-              onDelete: () async {
-                await _storageService.deleteOfflineVideo(
-                  snapshot.data![index].id,
-                );
-                setState(() {});
-              },
+          if (videos.isEmpty) {
+            return const Center(
+              child: Text('No saved videos'),
             );
-          },
-        );
-      },
-    );
-  }
+          }
 
-  Widget _buildPlaylistsTab() {
-    return Center(
-      child: Text('Playlists coming soon'),
+          return ListView.builder(
+            itemCount: videos.length,
+            itemBuilder: (context, index) {
+              final video = videos[index];
+              return VideoCard(
+                title: video.title,
+                subtitle: video.author,
+                thumbnailUrl: video.thumbnailUrl,
+                onTap: () {
+                  // Navigate to player
+                },
+              );
+            },
+          );
+        },
+      ),
     );
-  }
-
-  Widget _buildHistoryTab() {
-    return Center(
-      child: Text('History coming soon'),
-    );
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 }

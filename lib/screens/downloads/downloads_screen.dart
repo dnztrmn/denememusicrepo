@@ -1,95 +1,56 @@
 import 'package:flutter/material.dart';
-import '../../models/video.dart';
-import '../../services/download_service.dart';
-import '../../services/storage_service.dart';
-import '../../widgets/video_download_tile.dart';
+import 'package:provider/provider.dart';
+import 'package:soundy/services/download_service.dart';
+import 'package:soundy/widgets/video_card.dart';
 
 class DownloadsScreen extends StatefulWidget {
+  const DownloadsScreen({Key? key}) : super(key: key);
+
   @override
-  _DownloadsScreenState createState() => _DownloadsScreenState();
+  State<DownloadsScreen> createState() => _DownloadsScreenState();
 }
 
 class _DownloadsScreenState extends State<DownloadsScreen> {
   final DownloadService _downloadService = DownloadService();
-  final StorageService _storageService = StorageService();
-  List<Video> _downloadedVideos = [];
-  bool _isLoading = true;
+  List<Map<String, dynamic>> _downloads = [];
 
   @override
   void initState() {
     super.initState();
-    _loadDownloadedVideos();
+    _loadDownloads();
   }
 
-  Future<void> _loadDownloadedVideos() async {
-    setState(() => _isLoading = true);
-    final videos = await _storageService.getOfflineVideos();
+  Future<void> _loadDownloads() async {
+    final downloads = await _downloadService.getDownloads();
     setState(() {
-      _downloadedVideos = videos;
-      _isLoading = false;
+      _downloads = downloads;
     });
-  }
-
-  Future<void> _deleteVideo(Video video) async {
-    await _storageService.deleteOfflineVideo(video.id);
-    await _loadDownloadedVideos();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Downloads'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.storage),
-            onPressed: () {
-              // Show storage info dialog
-            },
-          ),
-        ],
+        title: const Text('Downloads'),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _downloadedVideos.isEmpty
-              ? _buildEmptyState()
-              : _buildDownloadsList(),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.download_done,
-            size: 64,
-            color: Colors.grey,
-          ),
-          SizedBox(height: 16),
-          Text(
-            'No downloaded songs',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
+      body: _downloads.isEmpty
+          ? const Center(
+              child: Text('No downloads yet'),
+            )
+          : ListView.builder(
+              itemCount: _downloads.length,
+              itemBuilder: (context, index) {
+                final download = _downloads[index];
+                return VideoCard(
+                  title: download['title'],
+                  subtitle: download['artist'],
+                  thumbnailUrl: download['thumbnailUrl'],
+                  onTap: () {
+                    // Handle download playback
+                  },
+                );
+              },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDownloadsList() {
-    return ListView.builder(
-      itemCount: _downloadedVideos.length,
-      itemBuilder: (context, index) {
-        final video = _downloadedVideos[index];
-        return VideoDownloadTile(
-          video: video,
-          onDelete: () => _deleteVideo(video),
-        );
-      },
     );
   }
 }

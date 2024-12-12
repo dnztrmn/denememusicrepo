@@ -1,41 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../models/video.dart';
-import '../../services/youtube_service.dart';
-import '../../widgets/video_card.dart';
+import 'package:provider/provider.dart';
+import 'package:soundy/services/youtube_service.dart';
+import 'package:soundy/utils/error_handler.dart';
+import 'package:soundy/widgets/video_card.dart';
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({Key? key}) : super(key: key);
+
   @override
-  _SearchScreenState createState() => _SearchScreenState();
+  State<SearchScreen> createState() => _SearchScreenState();
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final YouTubeService _youtubeService = YouTubeService();
   final TextEditingController _searchController = TextEditingController();
-  List<Video> _searchResults = [];
   bool _isLoading = false;
-
-  Future<void> _performSearch(String query) async {
-    if (query.isEmpty) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final results = await _youtubeService.searchVideos(query);
-      setState(() {
-        _searchResults = results;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Search failed: $e')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,24 +21,64 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: TextField(
           controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search for music...',
+          decoration: const InputDecoration(
+            hintText: 'Search...',
             border: InputBorder.none,
             hintStyle: TextStyle(color: Colors.white70),
           ),
-          style: TextStyle(color: Colors.white),
-          onSubmitted: _performSearch,
+          style: const TextStyle(color: Colors.white),
+          onSubmitted: (value) => _performSearch(context),
         ),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _searchResults.length,
-              itemBuilder: (context, index) {
-                return VideoCard(video: _searchResults[index]);
-              },
-            ),
+      body: Consumer<YoutubeService>(
+        builder: (context, youtubeService, child) {
+          if (_isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final searchResults = youtubeService.searchResults;
+          if (searchResults.isEmpty) {
+            return const Center(
+              child: Text('No results'),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: searchResults.length,
+            itemBuilder: (context, index) {
+              final video = searchResults[index];
+              return VideoCard(
+                title: video.title,
+                subtitle: video.author,
+                thumbnailUrl: video.thumbnailUrl,
+                onTap: () {
+                  // Navigate to player
+                },
+              );
+            },
+          );
+        },
+      ),
     );
+  }
+
+  Future<void> _performSearch(BuildContext context) async {
+    if (_searchController.text.isEmpty) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final youtubeService = Provider.of<YoutubeService>(context, listen: false);
+      await youtubeService.search(_searchController.text);
+    } catch (e) {
+      if (!mounted) return;
+      handleError(context, e);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override

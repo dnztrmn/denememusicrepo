@@ -1,39 +1,29 @@
-name: SoundY
-description: "Tüm müzik platformlarını tek uygulamada birleştiren, güçlü ve kullanıcı dostu müzik deneyimi.₺"
-publish_to: 'none'
-
+name: soundy
+description: A music streaming application
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.3 <4.0.0'
+  sdk: ">=2.19.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  google_sign_in: ^6.2.1
-  http: ^1.1.2
-  youtube_player_flutter: ^8.1.2
-  flutter_inappwebview: ^5.8.0
-  audio_service: ^0.18.12
-  just_audio: ^0.9.36
-  # flutter_local_notifications: ^13.0.0 # Bildirim 
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  http: ^1.1.0
+  provider: ^6.0.5
   path_provider: ^2.1.1
-  provider: ^6.1.1
-  shared_preferences: ^2.2.2
+  logger: ^2.0.1
+  just_audio: ^0.9.35
+  youtube_explode_dart: ^2.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
-  build_runner: ^2.4.7
   hive_generator: ^2.0.1
+  build_runner: ^2.4.6
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/

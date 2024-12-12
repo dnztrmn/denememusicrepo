@@ -1,79 +1,63 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../models/video.dart';
-import '../config/api_config.dart';
-import 'api_manager.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:logger/logger.dart';
 
-class YouTubeService {
-  static final YouTubeService _instance = YouTubeService._internal();
-  final APIManager _apiManager = APIManager();
-  final String _baseUrl = 'https://www.googleapis.com/youtube/v3';
+class YoutubeService extends ChangeNotifier {
+  final _yt = YoutubeExplode();
+  final _logger = Logger();
+  final _box = Hive.box('appBox');
+  
+  List<Video> _searchResults = [];
+  List<Video> get searchResults => _searchResults;
+  
+  List<Video> _savedVideos = [];
+  List<Video> get savedVideos => _savedVideos;
 
-  factory YouTubeService() {
-    return _instance;
-  }
-
-  YouTubeService._internal();
-
-  Future<List<Video>> searchVideos(String query) async {
+  Future<void> search(String query) async {
     try {
-      final apiKey = _apiManager.getCurrentKey();
-      if (apiKey == null) throw Exception('No API key available');
-
-      final response = await http.get(
-        Uri.parse(
-            '$_baseUrl/search?part=snippet&q=$query&type=video&maxResults=20&key=${apiKey.key}'),
-      );
-
-      if (response.statusCode == 200) {
-        await _apiManager.updateQuotaUsage(
-            apiKey.key, APIConfig.QUOTA_COST_SEARCH);
-        final data = json.decode(response.body);
-        return _parseVideoResults(data);
-      } else if (response.statusCode == 403) {
-        _apiManager.rotateKey();
-        return searchVideos(query); // Retry with next API key
-      } else {
-        throw Exception('Failed to search videos');
-      }
+      final results = await _yt.search.search(query);
+      _searchResults = results.map((video) => video).toList();
+      notifyListeners();
     } catch (e) {
-      print('Error searching videos: $e');
-      throw e;
+      _logger.e('Search error: $e');
+      rethrow;
     }
   }
 
-  Future<List<Video>> getTrendingMusic() async {
+  Future<String> getAudioUrl(String videoId) async {
     try {
-      final apiKey = _apiManager.getCurrentKey();
-      if (apiKey == null) throw Exception('No API key available');
-
-      final response = await http.get(
-        Uri.parse(
-            '$_baseUrl/videos?part=snippet&chart=mostPopular&videoCategoryId=10&regionCode=TR&maxResults=20&key=${apiKey.key}'),
-      );
-
-      if (response.statusCode == 200) {
-        await _apiManager.updateQuotaUsage(
-            apiKey.key, APIConfig.QUOTA_COST_VIDEO);
-        final data = json.decode(response.body);
-        return _parseVideoResults(data);
-      } else if (response.statusCode == 403) {
-        _apiManager.rotateKey();
-        return getTrendingMusic();
-      } else {
-        throw Exception('Failed to get trending music');
-      }
+      final manifest = await _yt.videos.streamsClient.getManifest(videoId);
+      final audioOnly = manifest.audioOnly;
+      return audioOnly.withHighestBitrate().url.toString();
     } catch (e) {
-      print('Error getting trending music: $e');
-      throw e;
+      _logger.e('Get audio URL error: $e');
+      rethrow;
     }
   }
 
-  List<Video> _parseVideoResults(Map<String, dynamic> data) {
-    List<Video> videos = [];
-    for (var item in data['items']) {
-      videos.add(Video.fromJson(item));
+  Future<void> addPlaylist(String url) async {
+    try {
+      final playlist = await _yt.playlists.get(url);
+      final playlists = _box.get('playlists', defaultValue: []) as List;
+      playlists.add(playlist.id.toString());
+      await _box.put('playlists', playlists);
+      notifyListeners();
+    } catch (e) {
+      _logger.e('Add playlist error: $e');
+      rethrow;
     }
-    return videos;
+  }
+
+  Future<void> removePlaylist(int index) async {
+    try {
+      final playlists = _box.get('playlists', defaultValue: []) as List;
+      playlists.removeAt(index);
+      await _box.put('playlists', playlists);
+      notifyListeners();
+    } catch (e) {
+      _logger.e('Remove playlist error: $e');
+      rethrow;
+    }
   }
 }
