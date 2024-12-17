@@ -5,7 +5,7 @@ import 'package:soundy/services/youtube_service.dart';
 import 'package:soundy/utils/error_handler.dart';
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({Key? key}) : super(key: key);
+  AdminScreen({Key? key}) : super(key: key); // const kaldırıldı
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
@@ -47,7 +47,8 @@ class _AdminScreenState extends State<AdminScreen> {
               child: ValueListenableBuilder(
                 valueListenable: appBox.listenable(),
                 builder: (context, box, child) {
-                  final playlists = box.get('playlists', defaultValue: []) as List;
+                  final playlists =
+                      box.get('playlists', defaultValue: []) as List;
                   return ListView.builder(
                     itemCount: playlists.length,
                     itemBuilder: (context, index) {
@@ -71,7 +72,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Future<void> _addPlaylist(BuildContext context) async {
     try {
-      final youtubeService = Provider.of<YoutubeService>(context, listen: false);
+      final youtubeService =
+          Provider.of<YoutubeService>(context, listen: false);
       await youtubeService.addPlaylist(_playlistController.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +88,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Future<void> _removePlaylist(BuildContext context, int index) async {
     try {
-      final youtubeService = Provider.of<YoutubeService>(context, listen: false);
+      final youtubeService =
+          Provider.of<YoutubeService>(context, listen: false);
       await youtubeService.removePlaylist(index);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -29,7 +29,8 @@ class YoutubeService extends ChangeNotifier {
     try {
       final manifest = await _yt.videos.streamsClient.getManifest(videoId);
       final audioOnly = manifest.audioOnly;
-      return audioOnly.withHighestBitrate().url.toString();
+      final audio = audioOnly.withHighestBitrate();
+      return audio.url.toString();
     } catch (e) {
       _logger.e('Get audio URL error: $e');
       rethrow;
@@ -40,9 +41,12 @@ class YoutubeService extends ChangeNotifier {
     try {
       final playlist = await _yt.playlists.get(url);
       final playlists = _box.get('playlists', defaultValue: []) as List;
-      playlists.add(playlist.id.toString());
-      await _box.put('playlists', playlists);
-      notifyListeners();
+      if (!playlists.contains(playlist.id.toString())) {
+        playlists.add(playlist.id.toString());
+        await _box.put('playlists', playlists);
+        await loadSavedVideos();
+        notifyListeners();
+      }
     } catch (e) {
       _logger.e('Add playlist error: $e');
       rethrow;
@@ -54,10 +58,36 @@ class YoutubeService extends ChangeNotifier {
       final playlists = _box.get('playlists', defaultValue: []) as List;
       playlists.removeAt(index);
       await _box.put('playlists', playlists);
+      await loadSavedVideos();
       notifyListeners();
     } catch (e) {
       _logger.e('Remove playlist error: $e');
       rethrow;
     }
+  }
+
+  Future<void> loadSavedVideos() async {
+    try {
+      final playlists = _box.get('playlists', defaultValue: []) as List;
+      _savedVideos = [];
+      
+      for (final playlistId in playlists) {
+        final playlist = await _yt.playlists.get(playlistId);
+        await for (final video in _yt.playlists.getVideos(playlist.id)) {
+          _savedVideos.add(video);
+        }
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      _logger.e('Load saved videos error: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  void dispose() {
+    _yt.close();
+    super.dispose();
   }
 }

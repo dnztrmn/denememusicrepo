@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:soundy/screens/player/player_screen.dart';
 import 'package:soundy/services/youtube_service.dart';
 import 'package:soundy/utils/error_handler.dart';
 import 'package:soundy/widgets/video_card.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -52,9 +54,19 @@ class _SearchScreenState extends State<SearchScreen> {
               return VideoCard(
                 title: video.title,
                 subtitle: video.author,
-                thumbnailUrl: video.thumbnailUrl,
+                thumbnailUrl: video.thumbnails.mediumResUrl,
                 onTap: () {
-                  // Navigate to player
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PlayerScreen(
+                        videoId: video.id.toString(),
+                        title: video.title,
+                        author: video.author,
+                        thumbnailUrl: video.thumbnails.mediumResUrl,
+                      ),
+                    ),
+                  );
                 },
               );
             },

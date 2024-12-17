@@ -24,12 +24,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => YoutubeService()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'SoundY',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
+          useMaterial3: true,
         ),
-        home: const MainScreen(),
+        home: MainScreen(),
       ),
     );
   }
